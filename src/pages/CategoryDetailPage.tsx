@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { categoryColors } from '../categoryVisuals';
-import { loadTransactions } from '../storage';
-import { expenseCategories, incomeCategories } from '../types';
+import { canUseCategory, loadCustomCategories } from '../categoryStorage';
+import { getCategoryColor } from '../categoryVisuals';
+import { getState } from '../api';
 import type { Transaction, TransactionCategory, TransactionType } from '../types';
 
 function getCurrentMonth() {
@@ -26,12 +26,6 @@ function isTransactionType(value: string | undefined): value is TransactionType 
   return value === 'expense' || value === 'income';
 }
 
-function isValidCategory(type: TransactionType, category: string): category is TransactionCategory {
-  return type === 'expense'
-    ? expenseCategories.includes(category as never)
-    : incomeCategories.includes(category as never);
-}
-
 function sortTransactions(transactions: Transaction[]) {
   return [...transactions].sort((first, second) => {
     const dateDiff = second.date.localeCompare(first.date);
@@ -50,9 +44,12 @@ export default function CategoryDetailPage() {
   const decodedCategory = category ? decodeURIComponent(category) : '';
   const initialMonth = searchParams.get('month') || getCurrentMonth();
   const [selectedMonth, setSelectedMonth] = useState(initialMonth);
-  const initialResult = useMemo(() => loadTransactions(), []);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [customCategories, setCustomCategories] = useState(() => loadCustomCategories());
+  const [storageMessage, setStorageMessage] = useState('');
+  useEffect(() => { getState().then((state) => { setTransactions(state.transactions); setCustomCategories(state.customCategories); }).catch((error: Error) => setStorageMessage(error.message)); }, []);
 
-  if (!isTransactionType(type) || !isValidCategory(type, decodedCategory)) {
+  if (!isTransactionType(type) || !canUseCategory(type, decodedCategory, customCategories)) {
     return (
       <main className="app-shell">
         <section className="empty-state category-route-empty">
@@ -67,7 +64,7 @@ export default function CategoryDetailPage() {
   }
 
   const categoryTransactions = sortTransactions(
-    initialResult.transactions.filter(
+    transactions.filter(
       (transaction) =>
         transaction.type === type &&
         transaction.category === decodedCategory &&
@@ -94,9 +91,7 @@ export default function CategoryDetailPage() {
         </Link>
       </header>
 
-      {initialResult.hasError && (
-        <p className="storage-message">本地数据读取异常，已尽量显示可用分类详情。</p>
-      )}
+      {storageMessage && <p className="storage-message">{storageMessage}</p>}
 
       <section className="filter-panel category-month-filter" aria-label="分类详情筛选">
         <label>
@@ -142,7 +137,7 @@ export default function CategoryDetailPage() {
               <article className="detail-item" key={transaction.id}>
                 <span
                   className="record-marker"
-                  style={{ backgroundColor: categoryColors[decodedCategory] }}
+                  style={{ backgroundColor: getCategoryColor(decodedCategory) }}
                 />
                 <div className="detail-info">
                   <strong>{transaction.note || '无备注'}</strong>

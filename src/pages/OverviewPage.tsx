@@ -1,12 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { categoryColors } from '../categoryVisuals';
+import { categoryColors, getCategoryColor } from '../categoryVisuals';
+import { getCategories, loadCustomCategories } from '../categoryStorage';
 import { getMonthlyStats } from '../stats';
-import { loadTransactions, saveTransactions } from '../storage';
-import { expenseCategories, incomeCategories } from '../types';
+import { createTransaction, getState, removeTransaction } from '../api';
 import type {
-  ExpenseCategory,
-  IncomeCategory,
   Transaction,
   TransactionCategory,
   TransactionType,
@@ -61,26 +59,25 @@ function getTypeLabel(type: TransactionType) {
 
 export default function OverviewPage() {
   const today = useMemo(() => getTodayDate(), []);
-  const initialTransactions = useMemo(() => loadTransactions(), []);
-  const [transactions, setTransactions] = useState<Transaction[]>(
-    initialTransactions.transactions,
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [customCategories, setCustomCategories] = useState(() => loadCustomCategories());
+  const availableExpenseCategories = useMemo(
+    () => getCategories('expense', customCategories), [customCategories],
+  );
+  const availableIncomeCategories = useMemo(
+    () => getCategories('income', customCategories), [customCategories],
   );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
-  const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('餐饮');
-  const [incomeCategory, setIncomeCategory] = useState<IncomeCategory>('生活费');
+  const [expenseCategory, setExpenseCategory] = useState('餐饮');
+  const [incomeCategory, setIncomeCategory] = useState('生活费');
   const [date, setDate] = useState(today);
   const [note, setNote] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [storageMessage, setStorageMessage] = useState(
-    initialTransactions.hasError
-      ? '本地数据读取或保存异常，已尽量显示可用账本。'
-      : initialTransactions.migratedFromV1
-        ? '旧版支出记录已保留，并升级为新版本地数据。'
-        : '',
-  );
+  const [storageMessage, setStorageMessage] = useState('');
+  useEffect(() => { getState().then((state) => { setTransactions(state.transactions); setCustomCategories(state.customCategories); }).catch((error: Error) => setStorageMessage(error.message)); }, []);
   const monthLabel = useMemo(() => formatMonth(today), [today]);
   const monthlyStats = useMemo(() => getMonthlyStats(transactions, today), [transactions, today]);
   const totalPages = Math.max(1, Math.ceil(transactions.length / RECORDS_PER_PAGE));
@@ -97,7 +94,7 @@ export default function OverviewPage() {
     const segments = stats.map((stat) => {
       const startPercent = currentPercent;
       currentPercent += stat.percent;
-      return `${categoryColors[stat.category]} ${startPercent}% ${currentPercent}%`;
+      return `${getCategoryColor(stat.category)} ${startPercent}% ${currentPercent}%`;
     });
 
     if (currentPercent < 100) {
@@ -115,7 +112,7 @@ export default function OverviewPage() {
     return createDonutBackground(monthlyStats.incomeCategoryStats);
   }, [monthlyStats.incomeCategoryStats, monthlyStats.incomeInCents]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const amountInCents = parseAmountToCents(amount);
@@ -147,14 +144,7 @@ export default function OverviewPage() {
             createdAt,
           };
 
-    setTransactions((currentTransactions) => {
-      const nextTransactions = [transaction, ...currentTransactions];
-      const isSaved = saveTransactions(nextTransactions);
-
-      setStorageMessage(isSaved ? '' : '本地保存失败，请检查浏览器存储权限。');
-
-      return nextTransactions;
-    });
+    try { await createTransaction(transaction); setTransactions((current) => [transaction, ...current]); setStorageMessage(''); } catch (error) { setStorageMessage(error instanceof Error ? error.message : '账目保存失败。'); return; }
     setAmount('');
     setExpenseCategory('餐饮');
     setIncomeCategory('生活费');
@@ -166,25 +156,14 @@ export default function OverviewPage() {
     setIsDrawerOpen(false);
   }
 
-  function handleDeleteTransaction(transactionId: string) {
+  async function handleDeleteTransaction(transactionId: string) {
     const shouldDelete = window.confirm('确定要删除这条收支记录吗？');
 
     if (!shouldDelete) {
       return;
     }
 
-    setTransactions((currentTransactions) => {
-      const nextTransactions = currentTransactions.filter(
-        (transaction) => transaction.id !== transactionId,
-      );
-      const isSaved = saveTransactions(nextTransactions);
-      const nextTotalPages = Math.max(1, Math.ceil(nextTransactions.length / RECORDS_PER_PAGE));
-
-      setStorageMessage(isSaved ? '' : '本地保存失败，请检查浏览器存储权限。');
-      setCurrentPage((page) => Math.min(page, nextTotalPages));
-
-      return nextTransactions;
-    });
+    try { await removeTransaction(transactionId); setTransactions((current) => { const next = current.filter((transaction) => transaction.id !== transactionId); setCurrentPage((page) => Math.min(page, Math.max(1, Math.ceil(next.length / RECORDS_PER_PAGE)))); return next; }); } catch (error) { setStorageMessage(error instanceof Error ? error.message : '账目删除失败。'); }
   }
 
   function handleCloseDrawer() {
@@ -267,7 +246,7 @@ export default function OverviewPage() {
                   <article className="record-item" key={record.id}>
                     <span
                       className="record-marker"
-                      style={{ backgroundColor: categoryColors[record.category] }}
+                      style={{ backgroundColor: getCategoryColor(record.category) }}
                     />
                     <div className="record-info">
                       <strong>
@@ -359,7 +338,7 @@ export default function OverviewPage() {
                       <div className="category-row" key={item.category}>
                         <span
                           className="color-dot"
-                          style={{ backgroundColor: categoryColors[item.category] }}
+                          style={{ backgroundColor: getCategoryColor(item.category) }}
                         />
                         <span>{item.category}</span>
                         <strong>{formatCurrency(item.amountInCents)}</strong>
@@ -403,7 +382,7 @@ export default function OverviewPage() {
                       <div className="category-row" key={item.category}>
                         <span
                           className="color-dot"
-                          style={{ backgroundColor: categoryColors[item.category] }}
+                          style={{ backgroundColor: getCategoryColor(item.category) }}
                         />
                         <span>{item.category}</span>
                         <strong>{formatCurrency(item.amountInCents)}</strong>
@@ -503,10 +482,10 @@ export default function OverviewPage() {
                     <select
                       value={expenseCategory}
                       onChange={(event) =>
-                        setExpenseCategory(event.target.value as ExpenseCategory)
+                        setExpenseCategory(event.target.value)
                       }
                     >
-                      {expenseCategories.map((categoryOption) => (
+                      {availableExpenseCategories.map((categoryOption) => (
                         <option key={categoryOption}>{categoryOption}</option>
                       ))}
                     </select>
@@ -514,10 +493,10 @@ export default function OverviewPage() {
                     <select
                       value={incomeCategory}
                       onChange={(event) =>
-                        setIncomeCategory(event.target.value as IncomeCategory)
+                        setIncomeCategory(event.target.value)
                       }
                     >
-                      {incomeCategories.map((categoryOption) => (
+                      {availableIncomeCategories.map((categoryOption) => (
                         <option key={categoryOption}>{categoryOption}</option>
                       ))}
                     </select>

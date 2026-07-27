@@ -910,16 +910,67 @@ h2 {
 
 .transactions-page,
 .categories-page,
-.category-detail-page {
+.category-detail-page,
+.category-manager-page {
   display: grid;
   gap: 22px;
 }
 
 .transactions-page .page-header,
 .categories-page .page-header,
-.category-detail-page .page-header {
+.category-detail-page .page-header,
+.category-manager-page .page-header {
   padding-bottom: 0;
 }
+
+.category-manager-panel,
+.delete-category-panel {
+  display: grid;
+  gap: 22px;
+  border-radius: 8px;
+  padding: 24px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgb(44 88 78 / 7%);
+}
+
+.category-add-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.category-add-form label,
+.delete-category-panel label {
+  display: grid;
+  gap: 8px;
+  color: #31424d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.category-management-list { display: grid; }
+.managed-category-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid #e5efec;
+}
+.managed-category-row > div:first-child { display: grid; gap: 5px; }
+.managed-category-row span { color: #667782; font-size: 14px; }
+.managed-category-row em { color: #667782; font-size: 14px; font-style: normal; }
+.category-actions, .category-edit-actions { display: flex; gap: 8px; align-items: center; }
+.category-edit-actions input { min-height: 40px; width: 150px; padding: 8px 10px; }
+.minor-action, .danger-action { min-height: 36px; padding: 7px 11px; font-size: 14px; }
+.minor-action { border: 1px solid #c5ddd5; color: #168f73; background: #fbfffd; }
+.minor-action:hover { color: #ffffff; background: #13866c; box-shadow: none; }
+.danger-action { border: 1px solid #e6c6c2; color: #b8423a; background: #fff8f7; }
+.danger-action:hover { color: #ffffff; background: #b8423a; box-shadow: none; }
+.delete-category-panel { border-left: 4px solid #ef7d73; }
+.delete-category-panel h2 { margin: 0; }
+.delete-category-panel p { margin: -10px 0 0; color: #596a75; }
 
 .filter-panel,
 .detail-summary-card,

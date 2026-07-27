@@ -11,10 +11,10 @@ export const incomeCategories = [
 
 export const categories = expenseCategories;
 
-export type ExpenseCategory = (typeof expenseCategories)[number];
-export type IncomeCategory = (typeof incomeCategories)[number];
-export type Category = ExpenseCategory;
-export type TransactionCategory = ExpenseCategory | IncomeCategory;
+export type ExpenseCategory = string;
+export type IncomeCategory = string;
+export type Category = string;
+export type TransactionCategory = string;
 export type TransactionType = 'expense' | 'income';
 
 type BaseTransaction = {

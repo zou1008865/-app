@@ -1,7 +1,4 @@
-import { expenseCategories, incomeCategories } from './types';
 import type {
-  ExpenseCategory,
-  IncomeCategory,
   Transaction,
   TransactionType,
 } from './types';
@@ -22,8 +19,8 @@ export type MonthlyStats = {
   count: number;
   incomeCount: number;
   expenseCount: number;
-  incomeCategoryStats: CategoryStat<IncomeCategory>[];
-  expenseCategoryStats: CategoryStat<ExpenseCategory>[];
+  incomeCategoryStats: CategoryStat<string>[];
+  expenseCategoryStats: CategoryStat<string>[];
 };
 
 function isSameMonth(date: string, currentDate: string) {
@@ -37,11 +34,12 @@ function getTotalInCents(transactions: Transaction[]) {
   );
 }
 
-function getCategoryStats<TCategory extends IncomeCategory | ExpenseCategory>(
-  categories: readonly TCategory[],
+function getCategoryStats(
   transactions: Transaction[],
   totalInCents: number,
-): CategoryStat<TCategory>[] {
+): CategoryStat<string>[] {
+  const categories = [...new Set(transactions.map((transaction) => transaction.category))];
+
   return categories
     .map((category) => {
       const amountInCents = transactions
@@ -87,12 +85,10 @@ export function getMonthlyStats(
     incomeCount: monthIncomeTransactions.length,
     expenseCount: monthExpenseTransactions.length,
     incomeCategoryStats: getCategoryStats(
-      incomeCategories,
       monthIncomeTransactions,
       incomeInCents,
     ),
     expenseCategoryStats: getCategoryStats(
-      expenseCategories,
       monthExpenseTransactions,
       expenseInCents,
     ),

@@ -1,6 +1,6 @@
 import type { TransactionCategory } from './types';
 
-export const categoryColors: Record<TransactionCategory, string> = {
+export const categoryColors: Record<string, string> = {
   餐饮: '#2fb58a',
   交通: '#4ba3e3',
   学习: '#f2c94c',
@@ -15,3 +15,16 @@ export const categoryColors: Record<TransactionCategory, string> = {
   退款: '#56b6b0',
   其他收入: '#96a0aa',
 };
+
+export function getCategoryColor(category: TransactionCategory) {
+  if (categoryColors[category]) {
+    return categoryColors[category];
+  }
+
+  let hash = 0;
+  for (let index = 0; index < category.length; index += 1) {
+    hash = (hash * 31 + category.charCodeAt(index)) | 0;
+  }
+
+  return `hsl(${Math.abs(hash) % 360} 52% 52%)`;
+}

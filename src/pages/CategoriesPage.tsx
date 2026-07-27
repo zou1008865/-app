@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { categoryColors } from '../categoryVisuals';
+import { getCategoryColor } from '../categoryVisuals';
 import { getMonthlyStats } from '../stats';
-import { loadTransactions } from '../storage';
+import { getState } from '../api';
 import type { TransactionCategory, TransactionType } from '../types';
 
 function getCurrentMonth() {
@@ -18,7 +18,7 @@ function createDonutBackground(stats: { category: TransactionCategory; percent: 
   const segments = stats.map((stat) => {
     const startPercent = currentPercent;
     currentPercent += stat.percent;
-    return `${categoryColors[stat.category]} ${startPercent}% ${currentPercent}%`;
+      return `${getCategoryColor(stat.category)} ${startPercent}% ${currentPercent}%`;
   });
 
   if (currentPercent < 100) {
@@ -79,7 +79,7 @@ function CategoryStatSection({
               >
                 <span
                   className="color-dot"
-                  style={{ backgroundColor: categoryColors[item.category] }}
+                  style={{ backgroundColor: getCategoryColor(item.category) }}
                 />
                 <span>{item.category}</span>
                 <strong>{formatCurrency(item.amountInCents)}</strong>
@@ -99,11 +99,13 @@ function CategoryStatSection({
 }
 
 export default function CategoriesPage() {
-  const initialResult = useMemo(() => loadTransactions(), []);
+  const [transactions, setTransactions] = useState([] as import('../types').Transaction[]);
+  const [storageMessage, setStorageMessage] = useState('');
+  useEffect(() => { getState().then((state) => setTransactions(state.transactions)).catch((error: Error) => setStorageMessage(error.message)); }, []);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const monthlyStats = useMemo(
-    () => getMonthlyStats(initialResult.transactions, selectedMonth),
-    [initialResult.transactions, selectedMonth],
+    () => getMonthlyStats(transactions, selectedMonth),
+    [transactions, selectedMonth],
   );
 
   return (
@@ -118,9 +120,7 @@ export default function CategoriesPage() {
         </div>
       </header>
 
-      {initialResult.hasError && (
-        <p className="storage-message">本地数据读取异常，已尽量显示可用分类统计。</p>
-      )}
+      {storageMessage && <p className="storage-message">{storageMessage}</p>}
 
       <section className="filter-panel category-month-filter" aria-label="分类统计筛选">
         <label>

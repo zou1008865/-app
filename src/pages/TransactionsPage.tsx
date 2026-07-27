@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { loadTransactions, saveTransactions } from '../storage';
-import { expenseCategories, incomeCategories } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import { getState, removeTransaction } from '../api';
+import { getCategories, loadCustomCategories } from '../categoryStorage';
 import type { Transaction, TransactionCategory, TransactionType } from '../types';
 
 type TypeFilter = 'all' | TransactionType;
@@ -29,16 +29,16 @@ function getTypeLabel(type: TransactionType) {
   return type === 'expense' ? '支出' : '收入';
 }
 
-function getAvailableCategories(typeFilter: TypeFilter) {
+function getAvailableCategories(typeFilter: TypeFilter, customCategories = loadCustomCategories()) {
   if (typeFilter === 'income') {
-    return incomeCategories;
+    return getCategories('income', customCategories);
   }
 
   if (typeFilter === 'expense') {
-    return expenseCategories;
+    return getCategories('expense', customCategories);
   }
 
-  return [...expenseCategories, ...incomeCategories] as const;
+  return [...getCategories('expense', customCategories), ...getCategories('income', customCategories)];
 }
 
 function isSameMonth(date: string, month: string) {
@@ -58,16 +58,18 @@ function sortTransactions(transactions: Transaction[]) {
 }
 
 export default function TransactionsPage() {
-  const initialResult = useMemo(() => loadTransactions(), []);
-  const [transactions, setTransactions] = useState<Transaction[]>(initialResult.transactions);
+  const [customCategories, setCustomCategories] = useState(() => loadCustomCategories());
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-  const [storageMessage, setStorageMessage] = useState(
-    initialResult.hasError ? '本地数据读取异常，已尽量显示可用明细。' : '',
-  );
+  const [storageMessage, setStorageMessage] = useState('');
+  useEffect(() => { getState().then((state) => { setTransactions(state.transactions); setCustomCategories(state.customCategories); }).catch((error: Error) => setStorageMessage(error.message)); }, []);
 
-  const availableCategories = useMemo(() => getAvailableCategories(typeFilter), [typeFilter]);
+  const availableCategories = useMemo(
+    () => getAvailableCategories(typeFilter, customCategories),
+    [customCategories, typeFilter],
+  );
   const filteredTransactions = useMemo(() => {
     const filtered = transactions.filter((transaction) => {
       const matchesMonth = isSameMonth(transaction.date, selectedMonth);
@@ -93,23 +95,14 @@ export default function TransactionsPage() {
     setCategoryFilter('all');
   }
 
-  function handleDeleteTransaction(transactionId: string) {
+  async function handleDeleteTransaction(transactionId: string) {
     const shouldDelete = window.confirm('确定要删除这条收支记录吗？');
 
     if (!shouldDelete) {
       return;
     }
 
-    setTransactions((currentTransactions) => {
-      const nextTransactions = currentTransactions.filter(
-        (transaction) => transaction.id !== transactionId,
-      );
-      const isSaved = saveTransactions(nextTransactions);
-
-      setStorageMessage(isSaved ? '' : '本地保存失败，请检查浏览器存储权限。');
-
-      return nextTransactions;
-    });
+    try { await removeTransaction(transactionId); setTransactions((current) => current.filter((transaction) => transaction.id !== transactionId)); } catch (error) { setStorageMessage(error instanceof Error ? error.message : '账目删除失败。'); }
   }
 
   return (
