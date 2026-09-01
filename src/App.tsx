@@ -5,6 +5,7 @@ import { readLegacyData } from './legacyStorage';
 import CategoriesPage from './pages/CategoriesPage';
 import CategoryManagerPage from './pages/CategoryManagerPage';
 import CategoryDetailPage from './pages/CategoryDetailPage';
+import DetectiveGamePage from './pages/DetectiveGamePage';
 import OverviewPage from './pages/OverviewPage';
 import TransactionsPage from './pages/TransactionsPage';
 
@@ -13,6 +14,7 @@ const navItems = [
   { to: '/transactions', label: '收支明细' },
   { to: '/categories', label: '分类统计' },
   { to: '/category-manager', label: '分类管理' },
+  { to: '/games', label: '娱乐解谜' },
 ];
 
 export default function App() {
@@ -77,6 +79,7 @@ export default function App() {
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/category-manager" element={<CategoryManagerPage />} />
+          <Route path="/games" element={<DetectiveGamePage />} />
           <Route path="/categories/:type/:category" element={<CategoryDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

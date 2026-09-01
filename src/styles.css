@@ -1278,3 +1278,247 @@ h2 {
     gap: 9px;
   }
 }
+
+.detective-game-page {
+  display: grid;
+  gap: 22px;
+}
+
+.game-status-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.game-status-bar > div {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #dcebe6;
+  border-radius: 8px;
+  padding: 16px 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgb(44 88 78 / 5%);
+}
+
+.game-status-bar span {
+  color: #667782;
+  font-size: 14px;
+}
+
+.game-status-bar strong {
+  color: #12251f;
+  font-size: 22px;
+}
+
+.detective-game-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.case-panel,
+.logic-panel {
+  display: grid;
+  gap: 20px;
+  border-radius: 8px;
+  padding: 24px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgb(44 88 78 / 7%);
+}
+
+.case-story {
+  display: grid;
+  gap: 8px;
+  border-left: 4px solid #4ba3e3;
+  border-radius: 0 8px 8px 0;
+  padding: 16px 18px;
+  background: #f4f9fd;
+}
+
+.case-story p {
+  margin: 0;
+  color: #40525d;
+  line-height: 1.65;
+}
+
+.case-story strong {
+  color: #25343f;
+}
+
+.clue-section {
+  display: grid;
+  gap: 8px;
+}
+
+.clue-section .panel-header {
+  margin-bottom: 0;
+}
+
+.clue-section h3 {
+  margin: 4px 0 0;
+  color: #25343f;
+  font-size: 20px;
+}
+
+.clue-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 28px;
+  color: #40525d;
+  line-height: 1.65;
+}
+
+.clue-list li {
+  padding-left: 4px;
+}
+
+.hint-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px dashed #b9d9cf;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfffd;
+}
+
+.hint-box strong {
+  color: #25343f;
+}
+
+.hint-box p {
+  margin: 6px 0 0;
+  color: #667782;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.logic-instruction {
+  margin: -8px 0 0;
+  color: #596a75;
+  line-height: 1.65;
+}
+
+.logic-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dcebe6;
+  border-radius: 8px;
+}
+
+.logic-table {
+  width: 100%;
+  min-width: 500px;
+  border-collapse: collapse;
+}
+
+.logic-table th,
+.logic-table td {
+  border-bottom: 1px solid #e5efec;
+  padding: 14px 12px;
+  text-align: left;
+}
+
+.logic-table thead th {
+  color: #667782;
+  background: #f7fbfa;
+  font-size: 14px;
+}
+
+.logic-table tbody tr:last-child th,
+.logic-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.logic-table tbody th {
+  color: #25343f;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.logic-table select {
+  min-width: 136px;
+}
+
+.culprit-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.culprit-panel label {
+  display: grid;
+  gap: 8px;
+  color: #31424d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.culprit-panel button {
+  min-width: 148px;
+}
+
+.game-result {
+  border-radius: 8px;
+  padding: 14px 16px;
+  line-height: 1.6;
+}
+
+.game-result p {
+  margin: 6px 0 0;
+}
+
+.game-result.warning {
+  border: 1px solid #ead99a;
+  color: #795c00;
+  background: #fff9e4;
+}
+
+.game-result.error {
+  border: 1px solid #e6c6c2;
+  color: #9f3d36;
+  background: #fff5f3;
+}
+
+.game-result.success {
+  border: 1px solid #a9dbc9;
+  color: #116d58;
+  background: #effaf6;
+}
+
+.game-result.success strong {
+  color: #0f765e;
+  font-size: 18px;
+}
+
+.game-result.success span {
+  display: block;
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .detective-game-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .game-status-bar,
+  .culprit-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .hint-box {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hint-box button,
+  .culprit-panel button {
+    width: 100%;
+  }
+}
